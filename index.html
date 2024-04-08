@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Ripple Effect</title>
+  <style>
+    #text-container {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 100px;
+      right: 100px;
+      margin: auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      flex-direction: column;
+      color: aliceblue;
+      max-height: 100vh;
+      overflow: hidden;
+    }
+
+
+    body {
+      background-color: rgb(145, 145, 145);
+      cursor: alias;
+    }
+
+    .clickable-text {
+      cursor: zoom-in;
+      ;
+    }
+
+    .clickable-text:hover {
+      font-weight: bold;
+    }
+
+    #image-container img {
+      width: 150px;
+      height: 150px;
+      position: absolute;
+      z-index: 3;
+    }
+
+    body,
+    html {
+      margin: 0;
+      height: 100%;
+    }
+
+    @keyframes fadeOut {
+      from {
+        opacity: 1;
+      }
+
+      to {
+        opacity: 0;
+      }
+    }
+
+    .fade-out {
+      animation-name: fadeOut;
+      animation-duration: 25s;
+      animation-fill-mode: forwards;
+      transition: ease;
+    }
+
+
+    canvas {
+      position: absolute;
+      display: block;
+    }
+
+    .carpText {
+      cursor: zoom-in;
+      font-size: 10px;
+      letter-spacing: 200px;
+      transition: 3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+
+    .carpText:active {
+      font-size: 60px;
+      font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+      letter-spacing: normal;
+      transition: 3s cubic-bezier(0.075, 0.82, 0.165, 1);
+    }
+
+    .noselect {
+      -webkit-touch-callout: none;
+      /* iOS Safari */
+      -webkit-user-select: none;
+      /* Safari */
+      -khtml-user-select: none;
+      /* Konqueror HTML */
+      -moz-user-select: none;
+      /* Old versions of Firefox */
+      -ms-user-select: none;
+      /* Internet Explorer/Edge */
+      user-select: none;
+      /* Non-prefixed version, currently supported by Chrome, Opera, and Firefox */
+    }
+  </style>
+</head>
+
+<body>
+
+  <canvas id="canvas"></canvas>
+
+  <div id="text-container" class="noselect">
+
+    <p class="carpText">
+      <span class="clickable-text" data-img-src="path-to-image.jpg">Specific Text</span>
+      “Observations and studies reveal that the jumps are not mere whimsy. They are calculated responses to
+      environmental stimuli. Carp are equipped with a highly sensitive lateral line system, an organ that detects
+      changes in water pressure and vibrations around them.”
+
+    </p>
+
+    <p class="carpText">
+      “It is this sensitivity that triggers their leap. The vibrations in the water, often caused by the rumbling
+      engines of boats or the turbulent flow of rivers, are interpreted as potential threats. The carp's instinctive
+      reaction is to flee from these perceived dangers.”
+    </p>
+
+    <p class="carpText">
+      “Another layer to this behavior is communication. By jumping, carp may be signaling to their companions, creating
+      ripples to indicate distress or to help the group navigate and coordinate their movements.”
+    </p>
+
+    <p class="carpText">
+      “But perhaps the most compelling reason for their acrobatic displays is feeding strategy. As insects and small
+      prey hover above the water's surface, a well-timed jump can result in a successful catch.”
+    </p>
+
+    <p class="carpText">
+      “This act of jumping is a testament to the carp's adaptability and resilience. It's a survival skill honed over
+      millennia, a remarkable blend of instinct, communication, and predation. Each leap is a snapshot of evolution in
+      action, a carp's answer to the challenges of its environment.”
+    </p>
+
+  </div>
+
+
+  <div>
+
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let ripples = [];
+
+    // gif array
+    var gifs = [
+      'carp gif/1.gif',
+      'carp gif/2.gif',
+      'carp gif/3.gif.webp',
+      'carp gif/4.gif.webp',
+      'carp gif/5.webp',
+      'carp gif/6.webp',
+      'carp gif/7.webp',
+      'carp gif/8.webp',
+      'carp gif/9.webp',
+      'carp gif/10.webp',
+      'carp gif/11.gif',
+      'carp gif/12.gif',
+      'carp gif/13.gif',
+      'carp gif/14.webp',
+      'carp gif/15.gif',
+      'carp gif/16.gif',
+      'carp gif/17.webp',
+      'carp gif/18.webp',
+      'carp gif/19.gif.webp',
+      'carp gif/20.gif',
+      'carp gif/21.gif',
+      'carp gif/22.gif',
+      'carp gif/23.gif',
+      'carp gif/24.gif',
+      'carp gif/25.gif',
+      'carp gif/26.gif',
+      'carp gif/27.gif',
+      'carp gif/28.gif',
+      'carp gif/29.gif',
+      'carp gif/30.gif',
+      'carp gif/31.gif',
+    ];
+
+    document.body.addEventListener('click', function (event) {
+      if (!event.target.closest('.grid-item') && !event.target.closest('.floating-window')) {
+        showRandomGifs();
+      }
+    });
+
+
+    // Function to show random number (1-2) of GIFs
+    function showRandomGifs() {
+      var numberOfGifs = Math.floor(Math.random() * 2) + 1;
+      for (var i = 0; i < numberOfGifs; i++) {
+        var randomIndex = Math.floor(Math.random() * gifs.length);
+        var selectedGif = gifs[randomIndex];
+        createGifWindow(selectedGif);
+      }
+    }
+
+    // Function to create a GIF window
+    function createGifWindow(gifSrc) {
+      var gifWindow = document.createElement('div');
+      var topPosition = (window.innerHeight * 0.01) + (Math.random() * (window.innerHeight * 0.99));
+      var leftPosition = (window.innerWidth * 0.01) + (Math.random() * (window.innerWidth * 0.99));
+
+      gifWindow.style.cssText = 'position: fixed; top: ' + topPosition + 'px; left: ' + leftPosition + 'px; transform: translate(-50%, -50%); z-index: 3000;';
+
+      var gifImage = document.createElement('img');
+      gifImage.src = gifSrc;
+      gifImage.style.width = '150px';
+      gifImage.style.height = 'auto';
+
+      gifWindow.appendChild(gifImage);
+      document.body.appendChild(gifWindow);
+    }
+
+    // Create the ripple effect
+    function createRipple(x, y) {
+      ripples.push({ x: x, y: y, radius: 0, alpha: 1 });
+    }
+
+    // Draw the ripple
+    function drawRipple() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ripples = ripples.filter(ripple => ripple.alpha > 0); // Remove finished ripples
+      ripples.forEach(ripple => {
+        // Set the alpha for the whole ring
+        ctx.globalAlpha = ripple.alpha;
+
+        // Create a smaller canvas to draw the pixelated ripple
+        const offCanvas = document.createElement('canvas');
+        const offCtx = offCanvas.getContext('2d');
+        offCanvas.width = canvas.width / 10;
+        offCanvas.height = canvas.height / 10;
+
+        // Scale down the context to pixelate
+        offCtx.scale(0.1, 0.1);
+
+        // Draw the outer ellipse (ring)
+        offCtx.beginPath();
+        offCtx.ellipse(ripple.x, ripple.y, ripple.radius, ripple.radius * 0.8, 0, 0, 2 * Math.PI);
+        offCtx.lineWidth = 10; // Make the line thicker
+        offCtx.strokeStyle = 'white'; // The color of the ripple
+        offCtx.stroke();
+
+        // Draw the pixelated ripple onto the main canvas
+        ctx.drawImage(offCanvas, 0, 0, canvas.width, canvas.height);
+
+        // Decrease the alpha (opacity) so the ripple fades out
+        ripple.alpha -= 0.02; // Fade out ripple
+        // Increase the size of the ripple
+        ripple.radius += 1; // Speed of ripple
+      });
+
+      // Reset alpha to fully opaque for other drawing operations
+      ctx.globalAlpha = 1.0;
+
+      requestAnimationFrame(drawRipple);
+    }
+
+    // Make elements ripple on mouse down and drag
+    function addRippleEffect(element) {
+      element.addEventListener('mousedown', function (event) {
+        createRipple(event.pageX, event.pageY);
+      });
+      element.addEventListener('mousemove', function (event) {
+        // Check if the left mouse button is pressed
+        if (event.buttons === 1) {
+          createRipple(event.pageX, event.pageY);
+        }
+      });
+    }
+
+    // Add the ripple effect to the canvas and text
+    addRippleEffect(canvas);
+    addRippleEffect(document.getElementById('text-container'));
+
+    // Function to make images draggable and ripple on drag
+    function makeDraggable(element) {
+      addRippleEffect(element); // Add ripple effect to the image
+
+      element.onmousedown = function (event) {
+        event.preventDefault();
+        let shiftX = event.clientX - element.getBoundingClientRect().left;
+        let shiftY = event.clientY - element.getBoundingClientRect().top;
+
+        function moveAt(pageX, pageY) {
+          element.style.left = pageX - shiftX + 'px';
+          element.style.top = pageY - shiftY + 'px';
+        }
+
+        function onMouseMove(event) {
+          moveAt(event.pageX, event.pageY);
+          createRipple(event.pageX, event.pageY); // Create ripple when dragging
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+
+        element.onmouseup = function () {
+          document.removeEventListener('mousemove', onMouseMove);
+          element.onmouseup = null;
+        };
+      };
+
+      element.ondragstart = function () {
+        return false;
+      };
+    }
+
+    // Add click event listener to the text to show an image
+    document.querySelectorAll('.clickable-text').forEach(item => {
+      item.addEventListener('click', event => {
+        const imgSrc = event.target.getAttribute('data-img-src');
+        const img = document.createElement('img');
+        img.src = imgSrc;
+        img.style.left = event.pageX + 'px';
+        img.style.top = event.pageY + 'px';
+        document.getElementById('image-container').appendChild(img);
+        makeDraggable(img); // Make the new image draggable
+      });
+    });
+
+    // Start the animation loop for the ripple effect
+    drawRipple();
+
+    function createGifWindow(gifSrc) {
+      var gifWindow = document.createElement('div');
+      var topPosition = (window.innerHeight * 0.1) + (Math.random() * (window.innerHeight * 0.8));
+      var leftPosition = (window.innerWidth * 0.1) + (Math.random() * (window.innerWidth * 0.8));
+
+      gifWindow.style.cssText = 'position: fixed; top: ' + topPosition + 'px; left: ' + leftPosition + 'px; transform: translate(-50%, -50%); z-index: 3000;';
+
+      var gifImage = document.createElement('img');
+      gifImage.src = gifSrc;
+      gifImage.style.width = '150px';
+      gifImage.style.height = 'auto';
+
+      gifWindow.appendChild(gifImage);
+      document.body.appendChild(gifWindow);
+
+      gifWindow.classList.add('fade-out');
+
+      setTimeout(function () {
+        gifWindow.remove();
+      }, 25000); // 
+    }
+  </script>
+</body>
+
+</html>
